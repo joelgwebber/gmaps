@@ -1,0 +1,72 @@
+# API
+
+  //kh.google.com/rt/earth/
+    NodeData/pb=!1m2!1s214260515151525421707!2u585!2e6!4b0
+
+# File format
+
+Chunk
+  header: packed (type (3 bits) / len)
+  data: u8[len]
+
+Chunks
+  len:    packed
+  chunks: Chunk[]
+
+Chunk<Object>
+  matrices(1)
+    count:      f64
+    matrixData: f64[]
+  mesh(2):      Chunks<Mesh>
+  copyrightId(3): packed
+  waterMesh(6):   Chunks<Mesh>
+  overlayMesh(7): Chunks<Mesh>
+  ?(8) // Something with normals?
+
+Chunk<Mesh>
+  verts(1)
+    count:   packed
+    verts:   f64[count/3] // packed?
+  indices(3)
+    count:   packed
+    indices: packed[count]
+  texture(6)
+    texture: Chunks<Texture>
+    data:    (remainder)
+  uv(7)
+    len:     packed
+    ?:       u16
+    ?:       u16
+    ?:       u8[len]
+  layers(8)
+    ?:       packed
+    len:     packed
+    layers?: packed[len]
+  ?(9)
+  ?(10)
+  normals(11)
+    len:     packed
+    data:    u8[len]
+  meshId(12): packed
+
+Chunk<Texture>
+  len(1): packed
+  textureFormat(2): packed (1:uncompressed 6:compressed)
+  width(3): packed
+  height(4): packed
+  viewDirection(5): packed
+  meshId(6): packed
+
+  buf:  u8[len]
+
+
+# Draw calls
+
+// Per chunk.
+//
+uniformMatrix4fv(...);
+bindBuffer(ARRAY_BUFFER, mesh.vertices);
+// Why stride 8? What's the other half of the data?
+vertexAttribPointer(0 /*index*/, 4 /*size*/, UNSIGNED_BYTE /*type*/, true /*normalized*/, 8 /*stride*/, 0 /*offset*/);
+bindBuffer(ELEMENT_ARRAY_BUFFER, mesh.indices);
+drawElements(TRIANGLE_STRIP, mesh., UNSIGNED_SHORT, 0);
